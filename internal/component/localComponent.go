@@ -8,14 +8,16 @@ import (
 	"go.uber.org/zap"
 	"go_client/internal/communicator"
 	"strings"
+	"sync"
 	"time"
 )
 
 type LocalComponent struct {
 	Component
-	connected       bool
 	configs         map[string]string
 	watchCancellers map[string]context.CancelFunc
+	connected       bool
+	configLock      sync.RWMutex
 }
 
 func (c *LocalComponent) Test() {
@@ -29,9 +31,10 @@ func NewLocalComponent(kind, name string) (*LocalComponent, error) {
 	}
 	return &LocalComponent{
 		Component:       Component{Kind: kind, Name: name, Id: newUuid.String()},
-		connected:       false,
 		configs:         map[string]string{},
 		watchCancellers: map[string]context.CancelFunc{},
+		connected:       false,
+		configLock:      sync.RWMutex{},
 	}, nil
 }
 
@@ -57,16 +60,27 @@ func (c *LocalComponent) Connect() {
 		}
 	}
 	c.connected = true
+	// listen to changes of my params
+	c.WatchParameters(c.Id,
+		func(key, val string, isModified bool) {
+			c.configLock.Lock()
+			defer c.configLock.Unlock()
+			c.configs[key] = val
+		},
+		func(key string) {
+			c.configLock.Lock()
+			defer c.configLock.Unlock()
+			delete(c.configs, key)
+		},
+	)
 }
 
 func (c *LocalComponent) Disconnect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	// remove watchers
-	if watchCount := len(c.watchCancellers); watchCount > 0 {
-		for _, cancelWatch := range c.watchCancellers {
-			cancelWatch()
-		}
+	for _, cancelWatch := range c.watchCancellers {
+		cancelWatch()
 	}
 	c.watchCancellers = map[string]context.CancelFunc{}
 	// remove configs
@@ -89,11 +103,25 @@ func (c *LocalComponent) SetParam(key, val string) {
 	if res, err := communicator.Client.Put(ctx, path(PrefixParameters, c.Id, key), val); err != nil {
 		zap.L().Panic("failed to set parameter", zap.Error(err), zap.Any("response", res))
 	}
-	c.configs[key] = val
+	c.configLock.Lock()
+	defer c.configLock.Unlock()
+}
+
+func (c *LocalComponent) IsParamSet(key string) bool {
+	c.configLock.RLock()
+	defer c.configLock.RUnlock()
+	_, ok := c.configs[key]
+	return ok
 }
 
 func (c *LocalComponent) GetParam(key string) string {
-	val, ok := c.configs[key]
+	var val string
+	var ok bool
+	func() {
+		c.configLock.RLock()
+		defer c.configLock.RUnlock()
+		val, ok = c.configs[key]
+	}()
 	if !ok {
 		zap.L().Panic("Parameter not set", zap.String("key", key))
 	}
@@ -107,7 +135,8 @@ func (c *LocalComponent) DeleteParam(key string) {
 	if err != nil {
 		zap.L().Panic("failed to set parameter", zap.Error(err), zap.Any("response", res))
 	}
-	delete(c.configs, key)
+	c.configLock.Lock()
+	defer c.configLock.Unlock()
 }
 
 func (c *LocalComponent) ReloadParam(key string) {
@@ -127,6 +156,8 @@ func (c *LocalComponent) ReloadParam(key string) {
 	if len(vals) > 1 {
 		zap.L().Panic("Parameter has multiple values", zap.String("key", key), zap.Any("values", vals))
 	}
+	c.configLock.Lock()
+	defer c.configLock.Unlock()
 	c.configs[key] = vals[0]
 }
 
@@ -199,12 +230,12 @@ func (c *LocalComponent) WatchComponents(kind string, onConnected, onDeleted fun
 	}()
 }
 
-func (c *LocalComponent) WatchParameters(stub *RemoteComponentStub, onSet func(key, val string), onDeleted func(key string)) {
+func (c *LocalComponent) WatchParameters(componentID string, onSet func(key, val string, isModified bool), onDeleted func(key string)) {
 	if !c.connected {
 		zap.L().Warn("disconnected component can't add a parameter watch")
 		return
 	}
-	watchPath := path(PrefixParameters, stub.Id)
+	watchPath := path(PrefixParameters, componentID)
 	if _, ok := c.watchCancellers[watchPath]; ok {
 		zap.L().Warn("ignoring duplicated parameter watch", zap.String("watchPath", watchPath))
 		return
@@ -213,15 +244,15 @@ func (c *LocalComponent) WatchParameters(stub *RemoteComponentStub, onSet func(k
 	watchChan := communicator.Client.Watch(watchCtx, watchPath, clientV3.WithPrefix())
 	c.watchCancellers[watchPath] = cancelWatch
 	go func() {
-		for wresp := range watchChan {
-			for _, ev := range wresp.Events {
+		for watchResponse := range watchChan {
+			for _, ev := range watchResponse.Events {
 				tokens := strings.Split(string(ev.Kv.Key), "/")
 				key := tokens[3]
 				val := string(ev.Kv.Value)
 				switch ev.Type {
 				case clientV3.EventTypePut:
 					if onSet != nil {
-						onSet(key, val)
+						onSet(key, val, ev.IsModify())
 					}
 				case clientV3.EventTypeDelete:
 					if onDeleted != nil {
