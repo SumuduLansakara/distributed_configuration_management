@@ -32,25 +32,21 @@ func NewLocalComponent(kind, name string) (*LocalComponent, error) {
 	}, nil
 }
 
-func (c *LocalComponent) paramKey(path []string) string {
+func path(path ...string) string {
 	return strings.Join(path, "/")
 }
 
-func (c *LocalComponent) metadataKey(path []string) string {
-	return strings.Join(path, "/")
-}
-
-func (c *LocalComponent) componentKey(path []string) string {
-	return strings.Join(path, "/")
+func (c *LocalComponent) PrettyName() string {
+	return strings.Join([]string{c.Kind, c.Name, c.InstanceID}, ":")
 }
 
 func (c *LocalComponent) Connect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	ops := []clientV3.Op{
-		clientV3.OpPut(c.metadataKey([]string{PrefixMetadata, c.InstanceID, "name"}), c.Name),
-		clientV3.OpPut(c.metadataKey([]string{PrefixMetadata, c.InstanceID, "kind"}), c.Kind),
-		clientV3.OpPut(c.componentKey([]string{PrefixComponents, c.Kind, c.InstanceID}), ""),
+		clientV3.OpPut(path(PrefixMetadata, c.InstanceID, "name"), c.Name),
+		clientV3.OpPut(path(PrefixMetadata, c.InstanceID, "kind"), c.Kind),
+		clientV3.OpPut(path(PrefixComponents, c.Kind, c.InstanceID), ""),
 	}
 	for _, op := range ops {
 		if _, err := communicator.Client.Do(ctx, op); err != nil {
@@ -64,8 +60,8 @@ func (c *LocalComponent) Disconnect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	ops := []clientV3.Op{
-		clientV3.OpDelete(c.metadataKey([]string{PrefixMetadata, c.InstanceID}), clientV3.WithPrefix()),
-		clientV3.OpDelete(c.componentKey([]string{PrefixComponents, c.Kind, c.InstanceID}), clientV3.WithPrefix()),
+		clientV3.OpDelete(path(PrefixMetadata, c.InstanceID), clientV3.WithPrefix()),
+		clientV3.OpDelete(path(PrefixComponents, c.Kind, c.InstanceID), clientV3.WithPrefix()),
 	}
 	for _, op := range ops {
 		if _, err := communicator.Client.Do(ctx, op); err != nil {
@@ -78,7 +74,7 @@ func (c *LocalComponent) Disconnect() {
 func (c *LocalComponent) SetParam(key, val string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	if res, err := communicator.Client.Put(ctx, c.paramKey([]string{PrefixParameters, c.InstanceID, key}), val); err != nil {
+	if res, err := communicator.Client.Put(ctx, path(PrefixParameters, c.InstanceID, key), val); err != nil {
 		zap.L().Panic("failed to set parameter", zap.Error(err), zap.Any("response", res))
 	}
 	c.configs[key] = val
@@ -94,7 +90,7 @@ func (c *LocalComponent) GetParam(key string) string {
 
 func (c *LocalComponent) DeleteParam(key string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	res, err := communicator.Client.Delete(ctx, c.paramKey([]string{PrefixParameters, c.InstanceID, key}))
+	res, err := communicator.Client.Delete(ctx, path(PrefixParameters, c.InstanceID, key))
 	cancel()
 	if err != nil {
 		zap.L().Panic("failed to set parameter", zap.Error(err), zap.Any("response", res))
@@ -104,7 +100,7 @@ func (c *LocalComponent) DeleteParam(key string) {
 
 func (c *LocalComponent) ReloadParam(key string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	res, err := communicator.Client.Get(ctx, c.paramKey([]string{PrefixParameters, c.InstanceID, key}))
+	res, err := communicator.Client.Get(ctx, path(PrefixParameters, c.InstanceID, key))
 	cancel()
 	if err != nil {
 		zap.L().Panic("failed to set parameter", zap.Error(err), zap.Any("response", res))
@@ -134,9 +130,8 @@ func (c *LocalComponent) ReloadAllParams() {
 }
 
 func (c *LocalComponent) ListComponents(kind string) map[string][]string {
-	path := strings.Join([]string{PrefixComponents, kind}, "/")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	res, err := communicator.Client.Get(ctx, path, clientV3.WithPrefix())
+	res, err := communicator.Client.Get(ctx, path(PrefixComponents, kind), clientV3.WithPrefix())
 	cancel()
 	if err != nil {
 		zap.L().Panic("failed listing components", zap.Error(err), zap.Any("response", res))
@@ -147,10 +142,34 @@ func (c *LocalComponent) ListComponents(kind string) map[string][]string {
 		thisKind := tokens[2]
 		thisUuid := tokens[3]
 		if _, ok := components[thisKind]; !ok {
-			components[thisKind] = []string{}
+			components[thisKind] = []string{thisUuid}
+		} else {
+			components[thisKind] = append(components[thisKind], thisUuid)
 		}
-		components[thisKind] = append(components[thisKind], thisUuid)
 	}
 	zap.L().Info("components list", zap.Any("components", components))
 	return components
+}
+
+func (c *LocalComponent) WatchComponents(kind string) {
+	go func() {
+		watchChan := communicator.Client.Watch(context.Background(), path(PrefixComponents, kind), clientV3.WithPrefix())
+		zap.L().Debug("watch begin", zap.String("watcher", c.PrettyName()), zap.String("target kind", kind))
+		for wresp := range watchChan {
+			for _, ev := range wresp.Events {
+				tokens := strings.Split(string(ev.Kv.Key), "/")
+				thisKind := tokens[2]
+				thisUuid := tokens[3]
+				switch ev.Type {
+				case clientV3.EventTypePut:
+					zap.L().Info("component created", zap.String("kind", thisKind), zap.String("uuid", thisUuid))
+				case clientV3.EventTypeDelete:
+					zap.L().Info("component deleted", zap.String("kind", thisKind), zap.String("uuid", thisUuid))
+				default:
+					zap.L().Debug("unknown component action", zap.Any("type", ev.Type), zap.String("kind", thisKind), zap.String("uuid", thisUuid))
+				}
+			}
+		}
+		zap.L().Debug("watch end", zap.String("watcher", c.PrettyName()), zap.String("target kind", kind))
+	}()
 }
