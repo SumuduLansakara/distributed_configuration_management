@@ -13,8 +13,9 @@ import (
 
 type LocalComponent struct {
 	Component
-	configs   map[string]string
-	connected bool
+	connected       bool
+	configs         map[string]string
+	watchCancellers map[string]context.CancelFunc
 }
 
 func (c *LocalComponent) Test() {
@@ -27,8 +28,10 @@ func NewLocalComponent(kind, name string) (*LocalComponent, error) {
 		return nil, errors.Wrap(err, "failed creating UUID")
 	}
 	return &LocalComponent{
-		Component: Component{Kind: kind, Name: name, InstanceID: newUuid.String()},
-		configs:   map[string]string{},
+		Component:       Component{Kind: kind, Name: name, Id: newUuid.String()},
+		connected:       false,
+		configs:         map[string]string{},
+		watchCancellers: map[string]context.CancelFunc{},
 	}, nil
 }
 
@@ -37,16 +40,16 @@ func path(path ...string) string {
 }
 
 func (c *LocalComponent) PrettyName() string {
-	return strings.Join([]string{c.Kind, c.Name, c.InstanceID}, ":")
+	return strings.Join([]string{c.Kind, c.Name, c.Id}, ":")
 }
 
 func (c *LocalComponent) Connect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	ops := []clientV3.Op{
-		clientV3.OpPut(path(PrefixMetadata, c.InstanceID, "name"), c.Name),
-		clientV3.OpPut(path(PrefixMetadata, c.InstanceID, "kind"), c.Kind),
-		clientV3.OpPut(path(PrefixComponents, c.Kind, c.InstanceID), ""),
+		clientV3.OpPut(path(PrefixMetadata, c.Id, "name"), c.Name),
+		clientV3.OpPut(path(PrefixMetadata, c.Id, "kind"), c.Kind),
+		clientV3.OpPut(path(PrefixComponents, c.Kind, c.Id), ""),
 	}
 	for _, op := range ops {
 		if _, err := communicator.Client.Do(ctx, op); err != nil {
@@ -59,9 +62,19 @@ func (c *LocalComponent) Connect() {
 func (c *LocalComponent) Disconnect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+	// remove watchers
+	if watchCount := len(c.watchCancellers); watchCount > 0 {
+		zap.L().Debug("removing watchers", zap.Int("count", watchCount), zap.String("id", c.Id))
+		for _, cancelWatch := range c.watchCancellers {
+			cancelWatch()
+		}
+	}
+	c.watchCancellers = map[string]context.CancelFunc{}
+	// remove configs
 	ops := []clientV3.Op{
-		clientV3.OpDelete(path(PrefixMetadata, c.InstanceID), clientV3.WithPrefix()),
-		clientV3.OpDelete(path(PrefixComponents, c.Kind, c.InstanceID), clientV3.WithPrefix()),
+		clientV3.OpDelete(path(PrefixComponents, c.Kind, c.Id), clientV3.WithPrefix()),
+		clientV3.OpDelete(path(PrefixMetadata, c.Id), clientV3.WithPrefix()),
+		clientV3.OpDelete(path(PrefixParameters, c.Id), clientV3.WithPrefix()),
 	}
 	for _, op := range ops {
 		if _, err := communicator.Client.Do(ctx, op); err != nil {
@@ -74,7 +87,7 @@ func (c *LocalComponent) Disconnect() {
 func (c *LocalComponent) SetParam(key, val string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	if res, err := communicator.Client.Put(ctx, path(PrefixParameters, c.InstanceID, key), val); err != nil {
+	if res, err := communicator.Client.Put(ctx, path(PrefixParameters, c.Id, key), val); err != nil {
 		zap.L().Panic("failed to set parameter", zap.Error(err), zap.Any("response", res))
 	}
 	c.configs[key] = val
@@ -90,7 +103,7 @@ func (c *LocalComponent) GetParam(key string) string {
 
 func (c *LocalComponent) DeleteParam(key string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	res, err := communicator.Client.Delete(ctx, path(PrefixParameters, c.InstanceID, key))
+	res, err := communicator.Client.Delete(ctx, path(PrefixParameters, c.Id, key))
 	cancel()
 	if err != nil {
 		zap.L().Panic("failed to set parameter", zap.Error(err), zap.Any("response", res))
@@ -100,7 +113,7 @@ func (c *LocalComponent) DeleteParam(key string) {
 
 func (c *LocalComponent) ReloadParam(key string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	res, err := communicator.Client.Get(ctx, path(PrefixParameters, c.InstanceID, key))
+	res, err := communicator.Client.Get(ctx, path(PrefixParameters, c.Id, key))
 	cancel()
 	if err != nil {
 		zap.L().Panic("failed to set parameter", zap.Error(err), zap.Any("response", res))
@@ -119,7 +132,7 @@ func (c *LocalComponent) ReloadParam(key string) {
 }
 
 func (c *LocalComponent) ReloadAllParams() {
-	prefix := strings.Join([]string{PrefixParameters, c.InstanceID}, "/")
+	prefix := strings.Join([]string{PrefixParameters, c.Id}, "/")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	res, err := communicator.Client.Get(ctx, prefix, clientV3.WithPrefix())
 	cancel()
@@ -151,25 +164,82 @@ func (c *LocalComponent) ListComponents(kind string) map[string][]string {
 	return components
 }
 
-func (c *LocalComponent) WatchComponents(kind string) {
+func (c *LocalComponent) WatchComponents(kind string, onConnected, onDeleted func(stub *RemoteComponentStub)) {
+	if !c.connected {
+		zap.L().Warn("disconnected component can't add a component watch")
+		return
+	}
+	watchPath := path(PrefixComponents, kind)
+	if _, ok := c.watchCancellers[watchPath]; ok {
+		zap.L().Warn("ignoring duplicated component watch", zap.String("watchPath", watchPath))
+		return
+	}
+	watchCtx, cancelWatch := context.WithCancel(context.Background())
+	watchChan := communicator.Client.Watch(watchCtx, watchPath, clientV3.WithPrefix())
+	c.watchCancellers[watchPath] = cancelWatch
 	go func() {
-		watchChan := communicator.Client.Watch(context.Background(), path(PrefixComponents, kind), clientV3.WithPrefix())
-		zap.L().Debug("watch begin", zap.String("watcher", c.PrettyName()), zap.String("target kind", kind))
+		zap.L().Debug("component watch begin", zap.String("watcher", c.PrettyName()), zap.String("target kind", kind))
 		for wresp := range watchChan {
 			for _, ev := range wresp.Events {
 				tokens := strings.Split(string(ev.Kv.Key), "/")
 				thisKind := tokens[2]
-				thisUuid := tokens[3]
+				thisId := tokens[3]
 				switch ev.Type {
 				case clientV3.EventTypePut:
-					zap.L().Info("component created", zap.String("kind", thisKind), zap.String("uuid", thisUuid))
+					zap.L().Info("component connected", zap.String("kind", thisKind), zap.String("id", thisId))
+					if onConnected != nil {
+						onConnected(NewRemoteComponentStub(thisKind, thisId))
+					}
 				case clientV3.EventTypeDelete:
-					zap.L().Info("component deleted", zap.String("kind", thisKind), zap.String("uuid", thisUuid))
+					zap.L().Info("component deleted", zap.String("kind", thisKind), zap.String("id", thisId))
+					if onDeleted != nil {
+						onDeleted(NewRemoteComponentStub(thisKind, thisId))
+					}
 				default:
-					zap.L().Debug("unknown component action", zap.Any("type", ev.Type), zap.String("kind", thisKind), zap.String("uuid", thisUuid))
+					zap.L().Debug("unknown component event", zap.Any("type", ev.Type), zap.String("kind", thisKind), zap.String("id", thisId))
 				}
 			}
 		}
-		zap.L().Debug("watch end", zap.String("watcher", c.PrettyName()), zap.String("target kind", kind))
+		zap.L().Debug("component watch end", zap.String("watcher", c.PrettyName()), zap.String("target kind", kind))
+	}()
+}
+
+func (c *LocalComponent) WatchParameters(stub *RemoteComponentStub, onSet func(key, val string), onDeleted func(key string)) {
+	if !c.connected {
+		zap.L().Warn("disconnected component can't add a parameter watch")
+		return
+	}
+	watchPath := path(PrefixParameters, stub.Id)
+	if _, ok := c.watchCancellers[watchPath]; ok {
+		zap.L().Warn("ignoring duplicated parameter watch", zap.String("watchPath", watchPath))
+		return
+	}
+	watchCtx, cancelWatch := context.WithCancel(context.Background())
+	watchChan := communicator.Client.Watch(watchCtx, watchPath, clientV3.WithPrefix())
+	c.watchCancellers[watchPath] = cancelWatch
+	go func() {
+		zap.L().Debug("param watch begin", zap.String("watcher", c.PrettyName()), zap.String("target", stub.Id))
+		for wresp := range watchChan {
+			for _, ev := range wresp.Events {
+				tokens := strings.Split(string(ev.Kv.Key), "/")
+				key := tokens[3]
+				val := string(ev.Kv.Value)
+				switch ev.Type {
+				case clientV3.EventTypePut:
+					zap.L().Info("param set", zap.String("key", key), zap.String("val", val))
+					if onSet != nil {
+						onSet(key, val)
+					}
+				case clientV3.EventTypeDelete:
+					zap.L().Info("param deleted", zap.String("key", key), zap.String("val", val))
+					if onDeleted != nil {
+						onDeleted(key)
+					}
+				default:
+					zap.L().Debug("unknown param event", zap.Any("type", ev.Type), zap.String("key", key), zap.String("val", val))
+				}
+			}
+		}
+		zap.L().Debug("parameter watch end", zap.String("watcher", c.PrettyName()), zap.String("target", stub.Id))
 	}()
 }
