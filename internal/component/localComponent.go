@@ -64,7 +64,6 @@ func (c *LocalComponent) Disconnect() {
 	defer cancel()
 	// remove watchers
 	if watchCount := len(c.watchCancellers); watchCount > 0 {
-		zap.L().Debug("removing watchers", zap.Int("count", watchCount), zap.String("id", c.Id))
 		for _, cancelWatch := range c.watchCancellers {
 			cancelWatch()
 		}
@@ -178,7 +177,6 @@ func (c *LocalComponent) WatchComponents(kind string, onConnected, onDeleted fun
 	watchChan := communicator.Client.Watch(watchCtx, watchPath, clientV3.WithPrefix())
 	c.watchCancellers[watchPath] = cancelWatch
 	go func() {
-		zap.L().Debug("component watch begin", zap.String("watcher", c.PrettyName()), zap.String("target kind", kind))
 		for wresp := range watchChan {
 			for _, ev := range wresp.Events {
 				tokens := strings.Split(string(ev.Kv.Key), "/")
@@ -186,21 +184,18 @@ func (c *LocalComponent) WatchComponents(kind string, onConnected, onDeleted fun
 				thisId := tokens[3]
 				switch ev.Type {
 				case clientV3.EventTypePut:
-					zap.L().Info("component connected", zap.String("kind", thisKind), zap.String("id", thisId))
 					if onConnected != nil {
 						onConnected(NewRemoteComponentStub(thisKind, thisId))
 					}
 				case clientV3.EventTypeDelete:
-					zap.L().Info("component deleted", zap.String("kind", thisKind), zap.String("id", thisId))
 					if onDeleted != nil {
 						onDeleted(NewRemoteComponentStub(thisKind, thisId))
 					}
 				default:
-					zap.L().Debug("unknown component event", zap.Any("type", ev.Type), zap.String("kind", thisKind), zap.String("id", thisId))
+					zap.L().Warn("unknown component event", zap.Any("type", ev.Type), zap.String("kind", thisKind), zap.String("id", thisId))
 				}
 			}
 		}
-		zap.L().Debug("component watch end", zap.String("watcher", c.PrettyName()), zap.String("target kind", kind))
 	}()
 }
 
@@ -218,7 +213,6 @@ func (c *LocalComponent) WatchParameters(stub *RemoteComponentStub, onSet func(k
 	watchChan := communicator.Client.Watch(watchCtx, watchPath, clientV3.WithPrefix())
 	c.watchCancellers[watchPath] = cancelWatch
 	go func() {
-		zap.L().Debug("param watch begin", zap.String("watcher", c.PrettyName()), zap.String("target", stub.Id))
 		for wresp := range watchChan {
 			for _, ev := range wresp.Events {
 				tokens := strings.Split(string(ev.Kv.Key), "/")
@@ -226,20 +220,17 @@ func (c *LocalComponent) WatchParameters(stub *RemoteComponentStub, onSet func(k
 				val := string(ev.Kv.Value)
 				switch ev.Type {
 				case clientV3.EventTypePut:
-					zap.L().Info("param set", zap.String("key", key), zap.String("val", val))
 					if onSet != nil {
 						onSet(key, val)
 					}
 				case clientV3.EventTypeDelete:
-					zap.L().Info("param deleted", zap.String("key", key), zap.String("val", val))
 					if onDeleted != nil {
 						onDeleted(key)
 					}
 				default:
-					zap.L().Debug("unknown param event", zap.Any("type", ev.Type), zap.String("key", key), zap.String("val", val))
+					zap.L().Warn("unknown param event", zap.Any("type", ev.Type), zap.String("key", key), zap.String("val", val))
 				}
 			}
 		}
-		zap.L().Debug("parameter watch end", zap.String("watcher", c.PrettyName()), zap.String("target", stub.Id))
 	}()
 }
