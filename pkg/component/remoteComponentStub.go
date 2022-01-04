@@ -4,7 +4,7 @@ import (
 	"context"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
-	"go_client/internal/communicator"
+	"go_client/pkg/communicator"
 	"strings"
 	"time"
 )

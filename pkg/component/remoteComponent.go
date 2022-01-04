@@ -3,7 +3,7 @@ package component
 import (
 	"context"
 	"go.uber.org/zap"
-	"go_client/internal/communicator"
+	"go_client/pkg/communicator"
 	"time"
 )
 

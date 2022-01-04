@@ -2,9 +2,9 @@ package main
 
 import (
 	"go.uber.org/zap"
-	"go_client/internal/communicator"
-	"go_client/internal/component"
-	"go_client/internal/utils"
+	"go_client/pkg/communicator"
+	"go_client/pkg/component"
+	"go_client/pkg/utils"
 	"time"
 )
 
