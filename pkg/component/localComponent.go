@@ -172,22 +172,23 @@ func (c *LocalComponent) ReloadAllParams() {
 	zap.L().Info("all params", zap.Any("response", res))
 }
 
-func (c *LocalComponent) ListComponents(kind string) map[string][]string {
+func (c *LocalComponent) ListComponents(kind string) map[string][]*RemoteComponentStub {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	res, err := communicator.Client.Get(ctx, path(PrefixComponents, kind), clientV3.WithPrefix())
 	cancel()
 	if err != nil {
 		zap.L().Panic("failed listing components", zap.Error(err), zap.Any("response", res))
 	}
-	components := map[string][]string{}
+	components := map[string][]*RemoteComponentStub{}
 	for _, v := range res.Kvs {
 		tokens := strings.Split(string(v.Key), "/")
 		thisKind := tokens[2]
 		thisUuid := tokens[3]
+		stub := NewRemoteComponentStub(thisKind, thisUuid)
 		if _, ok := components[thisKind]; !ok {
-			components[thisKind] = []string{thisUuid}
+			components[thisKind] = []*RemoteComponentStub{stub}
 		} else {
-			components[thisKind] = append(components[thisKind], thisUuid)
+			components[thisKind] = append(components[thisKind], stub)
 		}
 	}
 	zap.L().Info("components list", zap.Any("components", components))

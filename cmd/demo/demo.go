@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go_client/internal/demo"
+	"go_client/internal/prototype"
 	"go_client/pkg/utils"
 	"time"
 )
@@ -9,15 +9,11 @@ import (
 func main() {
 	utils.InitLogging()
 
-	system := demo.System{}
+	system := prototype.System{}
+	system.Init()
 	system.Start()
 
-	go system.StartTemperatureSensor()
-	go system.StartAC()
-	go system.StartDisplay()
-
-	system.InitAcController()
-
-	time.Sleep(time.Second * 1000)
+	// stop the simulation after 1 minute
+	time.Sleep(time.Second * 60)
 	system.Stop()
 }
