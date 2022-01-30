@@ -6,25 +6,26 @@ import (
 
 type AirConditioner struct {
 	*DemoComponent
+	isActive bool
 }
 
 func CreateAirConditioner(name string) *AirConditioner {
 	c := create(KindActuator, name)
 	c.SetParam(ParamActuatorType, ValueActuatorTypeAirConditioner)
-	return &AirConditioner{c}
+	c.SetParam(ParamACState, ValueACStateInactive)
+	return &AirConditioner{DemoComponent: c, isActive: false}
 }
 
 func (c *AirConditioner) Start() {
 	// demo:
 	// - a component can see changes to local parameters by external components
-	isActive := false
 	for {
 		time.Sleep(time.Second * 1) // check if my parameters are changed (by AC controller)
-		if !isActive && c.GetParam("active") == "true" {
-			isActive = true
+		if !c.isActive && c.GetParam(ParamACState) == ValueACStateActive {
+			c.isActive = true
 			c.log("turned-on")
-		} else if isActive && c.GetParam("active") == "false" {
-			isActive = false
+		} else if c.isActive && c.GetParam(ParamACState) == ValueACStateInactive {
+			c.isActive = false
 			c.log("turned-off")
 		}
 	}

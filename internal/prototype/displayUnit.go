@@ -27,13 +27,6 @@ func (c *DisplayUnit) Start() {
 				},
 				func(key string) {
 				})
-		} else if rc.GetParam(ParamSensorType) == ValueSensorTypeHumiditySensor {
-			c.WatchParameters(rc.Id,
-				func(key, val string, isModified bool) {
-					c.log(fmt.Sprintf("humidity: %s", val))
-				},
-				func(key string) {
-				})
 		}
 	}
 }

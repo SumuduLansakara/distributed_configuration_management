@@ -46,14 +46,14 @@ func (c *AirConditionerController) Start() {
 				panic(err)
 			}
 			if temp > 20 {
-				if airConditioner.GetParam("active") == "false" {
+				if airConditioner.GetParam(ParamACState) == ValueACStateInactive {
 					c.log("signal AC on")
-					airConditioner.SetParam("active", "true")
+					airConditioner.SetParam(ParamACState, ValueACStateActive)
 				}
 			} else if temp < 15 {
-				if airConditioner.GetParam("active") == "true" {
+				if airConditioner.GetParam(ParamACState) == ValueACStateActive {
 					c.log("signal AC off")
-					airConditioner.SetParam("active", "false")
+					airConditioner.SetParam(ParamACState, ValueACStateInactive)
 				}
 			}
 		},

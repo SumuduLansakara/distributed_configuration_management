@@ -13,6 +13,8 @@ const (
 	ParamHumidity    = "humidity"
 
 	ParamActuatorType = "actuatorType"
+
+	ParamACState = "acState"
 )
 
 const (
@@ -20,4 +22,7 @@ const (
 	ValueSensorTypeHumiditySensor    = "humidity"
 
 	ValueActuatorTypeAirConditioner = "airconditioner"
+
+	ValueACStateActive   = "active"
+	ValueACStateInactive = "inactive"
 )
