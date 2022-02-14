@@ -13,7 +13,7 @@ var Client *clientV3.Client
 func InitClient() {
 	var err error
 	Client, err = clientV3.New(clientV3.Config{
-		Endpoints:   []string{"localhost:2379", "localhost:22379", "localhost:32379"},
+		Endpoints:   []string{"127.0.0.1:12379", "127.0.0.1:12380"},
 		DialTimeout: 5 * time.Second,
 	})
 	checkError(err)
