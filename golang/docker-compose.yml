@@ -36,7 +36,15 @@ services:
       - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
       - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
       - ETCD_INITIAL_CLUSTER_STATE=new
-  prototype:
-    build: .
-    container_name: prototype
-    command: demo
+  temparature-sensor:
+    image: prototype
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /usr/bin/demo temperature-sensor
+  display:
+    image: prototype
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /usr/bin/demo display
