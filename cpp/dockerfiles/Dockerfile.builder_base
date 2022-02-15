@@ -1,0 +1,63 @@
+FROM ubuntu:20.04
+
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+    apt-get upgrade --yes && \
+    apt-get install --yes \
+                    git \
+                    wget \
+                    build-essential \
+                    cmake \
+                    libssl-dev \
+                    protobuf-compiler-grpc \
+                    libgrpc++-dev \
+                    libboost-random-dev \
+                    libboost-thread-dev \
+                    libboost-filesystem-dev \
+                    libboost-regex-dev \
+                    libboost-locale-dev
+
+# deploy etcd & etcdctl
+RUN wget -q https://github.com/etcd-io/etcd/releases/download/v3.4.13/etcd-v3.4.13-linux-amd64.tar.gz
+RUN tar zxvf etcd-v3.4.13-linux-amd64.tar.gz
+RUN mv etcd-v3.4.13-linux-amd64/etcd /usr/local/bin/
+RUN mv etcd-v3.4.13-linux-amd64/etcdctl /usr/local/bin/
+
+# install cpprestsdk
+WORKDIR /build
+RUN git clone --depth 1 https://github.com/microsoft/cpprestsdk.git
+WORKDIR cpprestsdk/build
+RUN cmake .. -DCPPREST_EXCLUDE_WEBSOCKETS=ON
+RUN make -j $(nproc)
+RUN make install
+
+# install etcd-cpp-apiv3
+WORKDIR /build
+RUN git clone --depth 1 https://github.com/etcd-cpp-apiv3/etcd-cpp-apiv3.git
+WORKDIR etcd-cpp-apiv3/build
+RUN cmake .. -DBUILD_ETCD_TESTS=1
+RUN make -j $(nproc)
+RUN make install
+
+# install catch2
+WORKDIR /build
+RUN git clone --depth 1 https://github.com/catchorg/Catch2.git
+WORKDIR Catch2
+RUN cmake -Bbuild -H. -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr
+RUN cmake --build build/ --target install -j $(nproc)
+
+# install fmt
+WORKDIR /build
+RUN git clone --depth 1 https://github.com/fmtlib/fmt.git
+WORKDIR fmt
+RUN cmake -Bbuild -H. -DFMT_TEST=OFF -DCMAKE_INSTALL_PREFIX=/usr
+RUN cmake --build build/ --target install -j $(nproc)
+
+# install plog
+WORKDIR /build
+RUN git clone --depth 1 https://github.com/SergiusTheBest/plog.git
+WORKDIR plog
+RUN cmake -Bbuild -H. -DCMAKE_INSTALL_PREFIX=/usr
+RUN cmake --build build/ --target install -j $(nproc)
