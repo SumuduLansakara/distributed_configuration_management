@@ -2,10 +2,11 @@ package communicator
 
 import (
 	"context"
+	"time"
+
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientV3 "go.etcd.io/etcd/client/v3"
 	"go.uber.org/zap"
-	"time"
 )
 
 var Client *clientV3.Client
@@ -13,7 +14,7 @@ var Client *clientV3.Client
 func InitClient() {
 	var err error
 	Client, err = clientV3.New(clientV3.Config{
-		Endpoints:   []string{"127.0.0.1:12379", "127.0.0.1:12380"},
+		Endpoints:   []string{"etcd1:2379", "etcd2:2379", "etcd3:2379"},
 		DialTimeout: 5 * time.Second,
 	})
 	checkError(err)
