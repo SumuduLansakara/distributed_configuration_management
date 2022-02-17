@@ -12,6 +12,7 @@ services:
       - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
       - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
       - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_LOG_LEVEL=info
   etcd2:
     image: docker.io/bitnami/etcd:3
     environment:
@@ -24,6 +25,7 @@ services:
       - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
       - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
       - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_LOG_LEVEL=info
   etcd3:
     image: docker.io/bitnami/etcd:3
     environment:
@@ -36,15 +38,34 @@ services:
       - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
       - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
       - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_LOG_LEVEL=info
   temparature-sensor:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
     command: /usr/bin/demo temperature-sensor
+  humidity-sensor:
+    image: prototype
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /usr/bin/demo humidity-sensor
   display:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
     command: /usr/bin/demo display
+  airconditioner:
+    image: prototype
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /usr/bin/demo airconditioner
+  airconditioner-controller:
+    image: prototype
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /usr/bin/demo airconditioner-controller
