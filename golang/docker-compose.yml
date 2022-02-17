@@ -44,28 +44,28 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: /usr/bin/demo temperature-sensor
+    command: temperature-sensor
   humidity-sensor:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
-    command: /usr/bin/demo humidity-sensor
+    command: humidity-sensor
   display:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
-    command: /usr/bin/demo display
+    command: display
   airconditioner:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
-    command: /usr/bin/demo airconditioner
+    command: airconditioner
   airconditioner-controller:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
-    command: /usr/bin/demo airconditioner-controller
+    command: airconditioner-controller

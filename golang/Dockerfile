@@ -7,11 +7,11 @@ RUN go mod download -x
 
 COPY . .
 RUN go build ./cmd/demo
-RUN cp demo /usr/bin/
 
-# FROM alpine
-# RUN apk add libc6-compat
-# 
-# COPY --from=builder /src/demo /usr/bin
+# --- run container
+FROM alpine
+RUN apk add libc6-compat
 
-# ENTRYPOINT [ "/usr/bin/demo" ]
+COPY --from=builder /src/demo /usr/bin
+
+ENTRYPOINT [ "/usr/bin/demo" ]
