@@ -10,8 +10,6 @@ import (
 )
 
 func main() {
-	time.Sleep(2 * time.Second) // FIXME: delay till etcd cluster starts
-
 	utils.InitLogging()
 	logger := zap.L()
 	logger.Debug("component started", zap.Any("args", os.Args))

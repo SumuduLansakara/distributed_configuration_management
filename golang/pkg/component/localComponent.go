@@ -2,14 +2,15 @@ package component
 
 import (
 	"context"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	clientV3 "go.etcd.io/etcd/client/v3"
-	"go.uber.org/zap"
 	"go_client/pkg/communicator"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	clientV3 "go.etcd.io/etcd/client/v3"
+	"go.uber.org/zap"
 )
 
 type LocalComponent struct {
@@ -49,16 +50,18 @@ func (c *LocalComponent) PrettyName() string {
 func (c *LocalComponent) Connect() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	ops := []clientV3.Op{
-		clientV3.OpPut(path(PrefixMetadata, c.Id, "name"), c.Name),
-		clientV3.OpPut(path(PrefixMetadata, c.Id, "kind"), c.Kind),
-		clientV3.OpPut(path(PrefixComponents, c.Kind, c.Id), ""),
+	kvs := map[string]string{
+		path(PrefixMetadata, c.Id, "name"):   c.Name,
+		path(PrefixMetadata, c.Id, "kind"):   c.Kind,
+		path(PrefixComponents, c.Kind, c.Id): "",
 	}
-	for _, op := range ops {
-		if _, err := communicator.Client.Do(ctx, op); err != nil {
-			zap.L().Panic("connection failed", zap.Error(err))
+
+	for key, val := range kvs {
+		if resp, err := communicator.Client.Put(ctx, key, val); err != nil {
+			zap.L().Panic("failed writing to config store", zap.Error(err), zap.Any("response", resp), zap.String("key", key))
 		}
 	}
+
 	c.connected = true
 	// listen to changes of my params
 	c.WatchParameters(c.Id,

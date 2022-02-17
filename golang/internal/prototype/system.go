@@ -15,7 +15,6 @@ type System struct {
 }
 
 func (s *System) Init() {
-	time.Sleep(2 * time.Second)
 	communicator.InitClient()
 }
 
