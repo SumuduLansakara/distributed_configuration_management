@@ -23,15 +23,15 @@ func InitClient() {
 			zap.L().Debug("client creation failed", zap.Int("retryCount", attempts))
 			continue
 		}
-		//
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		// test query
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		_, connectionErr = Client.Get(ctx, "/")
-		if connectionErr != nil {
-			zap.L().Debug("test query failed", zap.Int("retryCount", attempts))
-			continue
+		if connectionErr == nil {
+			break
 		}
-		break
+		zap.L().Debug("test query failed", zap.Int("retryCount", attempts))
+		time.Sleep(1 * time.Second)
 	}
 	if connectionErr == nil {
 		zap.L().Debug("successfully connected to etcd cluster", zap.Int("retryCount", attempts))
