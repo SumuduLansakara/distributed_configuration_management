@@ -39,31 +39,31 @@ services:
       - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
       - ETCD_INITIAL_CLUSTER_STATE=new
       - ETCD_LOG_LEVEL=info
-  temparature-sensor:
+  ts:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
     command: temperature-sensor
-  humidity-sensor:
+  hs:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
     command: humidity-sensor
-  display:
+  disp:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
     command: display
-  airconditioner:
+  ac:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
     command: airconditioner
-  airconditioner-controller:
+  ac-ctl:
     image: prototype
     build:
       context: .

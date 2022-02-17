@@ -19,5 +19,5 @@ func create(kind, name string) *DemoComponent {
 }
 
 func (c *DemoComponent) log(msg string) {
-	fmt.Printf("[%s] %s\n", c.Name, msg)
+	fmt.Printf("%s\n", msg)
 }
