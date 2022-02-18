@@ -1,7 +1,6 @@
 package prototype
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -10,12 +9,12 @@ var (
 	humidity    = 30.0
 )
 
-func GetTemperature() string {
+func GetTemperature() float64 {
 	temperature += rand.Float64()*10 - 4
-	return fmt.Sprintf("%f", temperature)
+	return temperature
 }
 
-func GetHumidity() string {
+func GetHumidity() float64 {
 	humidity += rand.Float64()*10 - 4
-	return fmt.Sprintf("%f", humidity)
+	return humidity
 }

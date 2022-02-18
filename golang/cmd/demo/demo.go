@@ -19,7 +19,7 @@ func startMetricServer() {
 func main() {
 	utils.InitLogging()
 
-	startMetricServer()
+	go startMetricServer()
 
 	logger := zap.L()
 	logger.Debug("component started", zap.Any("args", os.Args))

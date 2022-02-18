@@ -3,15 +3,25 @@ package prototype
 import (
 	"go_client/pkg/component"
 	"strconv"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type AirConditionerController struct {
 	*DemoComponent
+	metric prometheus.Gauge
 }
 
 func CreateAirConditionerController(name string) *AirConditionerController {
 	s := create(KindController, name)
-	return &AirConditionerController{s}
+	return &AirConditionerController{
+		DemoComponent: s,
+		metric: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "airconditioner_controller_state",
+			Help: "Current state of the air-conditioner controller",
+		}),
+	}
 }
 
 func (c *AirConditionerController) Start() {
@@ -48,11 +58,13 @@ func (c *AirConditionerController) Start() {
 			if temp > 25 {
 				if airConditioner.GetParam(ParamACState) == ValueACStateInactive {
 					c.log("signal AC on")
+					c.metric.Set(1)
 					airConditioner.SetParam(ParamACState, ValueACStateActive)
 				}
 			} else if temp < 20 {
 				if airConditioner.GetParam(ParamACState) == ValueACStateActive {
 					c.log("signal AC off")
+					c.metric.Set(0)
 					airConditioner.SetParam(ParamACState, ValueACStateInactive)
 				}
 			}
