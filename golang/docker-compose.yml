@@ -44,28 +44,52 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - 3001:3001
     command: temperature-sensor
   hs:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - 3002:3001
     command: humidity-sensor
   disp:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - 3003:3001
     command: display
   ac:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - 3004:3001
     command: airconditioner
   ac-ctl:
     image: prototype
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - 3005:3001
     command: airconditioner-controller
+  ## monitoring stack
+  prometheus:
+    image: prom/prometheus:v2.1.0
+    volumes:
+      - ./monitoring/prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - --web.enable-lifecycle
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    restart: always
+volumes:
+  prometheus_data:

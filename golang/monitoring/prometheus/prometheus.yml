@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+    monitor: "prototype"
+
+# Load and evaluate rules in this file every 'evaluation_interval' seconds.
+rule_files:
+  # - "first.rules"
+
+scrape_configs:
+  - job_name: "prometheus"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "temperature-sensor"
+    static_configs:
+      - targets: ["ts:3001"]
+  - job_name: "humidity-sensor"
+    static_configs:
+      - targets: ["hs:3001"]
+  - job_name: "display"
+    static_configs:
+      - targets: ["disp:3001"]
+  - job_name: "air-conditioner"
+    static_configs:
+      - targets: ["ac:3001"]
+  - job_name: "air-conditioner-controller"
+    static_configs:
+      - targets: ["ac-ctl:3001"]
