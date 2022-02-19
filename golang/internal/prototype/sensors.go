@@ -14,7 +14,7 @@ import (
 )
 
 func QueryEnvironment(key string) (float64, error) {
-	resp, err := http.Get("http://environment:3100" + key)
+	resp, err := http.Get("http://environment:3100/get?key=" + key)
 	if err != nil {
 		zap.L().Error("failed querying environment", zap.Error(err))
 		return -1, err
@@ -30,9 +30,9 @@ func QueryEnvironment(key string) (float64, error) {
 		zap.L().Error("unmarshal failed", zap.Error(err), zap.String("body", string(resBody)))
 		return -1, err
 	}
-	v, err := strconv.ParseFloat(respMap["val"], 64)
+	v, err := strconv.ParseFloat(respMap["value"], 64)
 	if err != nil {
-		zap.L().Error("invalid value", zap.Error(err), zap.String("value", respMap["val"]))
+		zap.L().Error("invalid value", zap.Error(err), zap.String("value", respMap["value"]))
 		return -1, err
 	}
 	return v, nil
@@ -63,7 +63,7 @@ func (c *TemperatureSensor) Start() {
 
 	// wait for environment to be ready
 	for {
-		_, err := QueryEnvironment(QueryKeyGetTemperature)
+		_, err := QueryEnvironment(EnvPropertyTemperature)
 		if err == nil {
 			break
 		}
@@ -72,7 +72,7 @@ func (c *TemperatureSensor) Start() {
 
 	for {
 		time.Sleep(time.Second * 2)
-		temperature, err := QueryEnvironment(QueryKeyGetTemperature)
+		temperature, err := QueryEnvironment(EnvPropertyTemperature)
 		if err != nil {
 			continue
 		}
@@ -106,7 +106,7 @@ func (c *HumiditySensor) Start() {
 
 	// wait for environment to be ready
 	for {
-		_, err := QueryEnvironment(QueryKeyGetHumidity)
+		_, err := QueryEnvironment(EnvPropertyHumidity)
 		if err == nil {
 			break
 		}
@@ -115,7 +115,7 @@ func (c *HumiditySensor) Start() {
 
 	for {
 		time.Sleep(time.Second * 2)
-		humidity, err := QueryEnvironment(QueryKeyGetHumidity)
+		humidity, err := QueryEnvironment(EnvPropertyHumidity)
 		if err != nil {
 			continue
 		}

@@ -28,8 +28,6 @@ const (
 )
 
 const (
-	QueryKeyGetTemperature = "/gettemperature"
-	QueryKeySetTemperature = "/settemperature"
-	QueryKeyGetHumidity    = "/gethumidity"
-	QueryKeySetHumidity    = "/sethumidity"
+	QueryKeyGet = "/get"
+	QueryKeySet = "/set"
 )
