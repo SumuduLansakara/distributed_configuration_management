@@ -1,10 +1,11 @@
 package prototype
 
 import (
+	"encoding/json"
 	"fmt"
-	"hash/fnv"
-	"math/rand"
-	"os"
+	"io/ioutil"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -12,18 +13,29 @@ import (
 	"go.uber.org/zap"
 )
 
-func initRand() {
-	// Use a random seed based on the hostname to have a unique seed for each container
-	hostname, err := os.Hostname()
+func QueryEnvironment(key string) (float64, error) {
+	resp, err := http.Get("http://environment:3100" + key)
 	if err != nil {
-		zap.L().Panic("failed getting hostname", zap.Error(err))
+		zap.L().Error("failed querying environment", zap.Error(err))
+		return -1, err
 	}
-	h := fnv.New64a()
-	h.Write([]byte(hostname))
-	hash := h.Sum64()
-	seed := time.Now().UnixNano() * int64(hash)
-	zap.L().Info("random seed", zap.Int64("seed", seed))
-	rand.Seed(seed)
+	resBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		zap.L().Error("failed reading response", zap.Error(err))
+		return -1, err
+	}
+	respMap := map[string]string{}
+	jsonErr := json.Unmarshal(resBody, &respMap)
+	if jsonErr != nil {
+		zap.L().Error("unmarshal failed", zap.Error(err), zap.String("body", string(resBody)))
+		return -1, err
+	}
+	v, err := strconv.ParseFloat(respMap["val"], 64)
+	if err != nil {
+		zap.L().Error("invalid value", zap.Error(err), zap.String("value", respMap["val"]))
+		return -1, err
+	}
+	return v, nil
 }
 
 // TemperatureSensor mocks a temperature sensor by periodically updating random temperature readings
@@ -49,12 +61,23 @@ func (c *TemperatureSensor) Start() {
 	// demo:
 	// - a component can change its own parameters
 
-	initRand()
+	// wait for environment to be ready
 	for {
-		temperature := GetTemperature()
+		_, err := QueryEnvironment(QueryKeyGetTemperature)
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second * 2)
+	}
+
+	for {
+		time.Sleep(time.Second * 2)
+		temperature, err := QueryEnvironment(QueryKeyGetTemperature)
+		if err != nil {
+			continue
+		}
 		c.metric.Set(temperature)
 		c.SetParam(ParamTemperature, fmt.Sprintf("%f", temperature))
-		time.Sleep(time.Second * 2)
 	}
 }
 
@@ -81,11 +104,22 @@ func (c *HumiditySensor) Start() {
 	// demo:
 	// - a component can change its own parameters
 
-	initRand()
+	// wait for environment to be ready
 	for {
-		humidity := GetHumidity()
+		_, err := QueryEnvironment(QueryKeyGetHumidity)
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second * 2)
+	}
+
+	for {
+		time.Sleep(time.Second * 2)
+		humidity, err := QueryEnvironment(QueryKeyGetHumidity)
+		if err != nil {
+			continue
+		}
 		c.metric.Set(humidity)
 		c.SetParam(ParamHumidity, fmt.Sprintf("%f", humidity))
-		time.Sleep(time.Second * 2)
 	}
 }

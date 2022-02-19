@@ -29,18 +29,24 @@ func main() {
 	}
 
 	system := prototype.System{}
-	system.Init()
 
 	switch os.Args[1] {
+	case "environment":
+		prototype.StartEnvironment()
 	case "temperature-sensor":
+		system.Init()
 		system.StartTemperatureSensor()
 	case "humidity-sensor":
+		system.Init()
 		system.StartHumiditySensor()
 	case "display":
+		system.Init()
 		system.StartDisplayUnit()
 	case "airconditioner":
+		system.Init()
 		system.StartAC()
 	case "airconditioner-controller":
+		system.Init()
 		system.StartACController()
 	default:
 		zap.L().Panic("Unsupported component name", zap.String("name", os.Args[1]))
