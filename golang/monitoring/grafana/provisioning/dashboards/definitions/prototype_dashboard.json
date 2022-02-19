@@ -85,7 +85,7 @@
               }
             ]
           },
-          "unit": "celsius"
+          "unit": "humidity"
         },
         "overrides": []
       },
@@ -95,7 +95,7 @@
         "x": 0,
         "y": 0
       },
-      "id": 2,
+      "id": 3,
       "options": {
         "legend": {
           "calcs": [],
@@ -114,13 +114,13 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "current_temparature",
+          "expr": "current_humidity",
           "interval": "",
           "legendFormat": "{{job}} reading",
           "refId": "A"
         }
       ],
-      "title": "Temparature Sensor Reading",
+      "title": "Humidity Sensor Reading",
       "type": "timeseries"
     },
     {
@@ -148,7 +148,7 @@
               }
             ]
           },
-          "unit": "celsius"
+          "unit": "humidity"
         },
         "overrides": []
       },
@@ -158,7 +158,7 @@
         "x": 12,
         "y": 0
       },
-      "id": 6,
+      "id": 7,
       "options": {
         "orientation": "auto",
         "reduceOptions": {
@@ -179,13 +179,13 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "current_temparature",
+          "expr": "current_humidity",
           "interval": "",
           "legendFormat": "{{job}} reading",
           "refId": "A"
         }
       ],
-      "title": "Temparature Sensor Reading",
+      "title": "Humidity Sensor Reading",
       "type": "gauge"
     },
     {
@@ -249,7 +249,7 @@
               }
             ]
           },
-          "unit": "humidity"
+          "unit": "celsius"
         },
         "overrides": []
       },
@@ -259,7 +259,7 @@
         "x": 0,
         "y": 9
       },
-      "id": 3,
+      "id": 2,
       "options": {
         "legend": {
           "calcs": [],
@@ -278,13 +278,13 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "current_humidity",
+          "expr": "current_temparature",
           "interval": "",
           "legendFormat": "{{job}} reading",
           "refId": "A"
         }
       ],
-      "title": "Humidity Sensor Reading",
+      "title": "Temparature Sensor Reading",
       "type": "timeseries"
     },
     {
@@ -312,7 +312,7 @@
               }
             ]
           },
-          "unit": "humidity"
+          "unit": "celsius"
         },
         "overrides": []
       },
@@ -322,7 +322,7 @@
         "x": 12,
         "y": 9
       },
-      "id": 7,
+      "id": 6,
       "options": {
         "orientation": "auto",
         "reduceOptions": {
@@ -343,14 +343,149 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "current_humidity",
+          "expr": "current_temparature",
           "interval": "",
           "legendFormat": "{{job}} reading",
           "refId": "A"
         }
       ],
-      "title": "Humidity Sensor Reading",
+      "title": "Temparature Sensor Reading",
       "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bool_on_off"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": true,
+          "expr": "airconditioner_controller_state",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Air-Conditioner Controller State",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": false,
+          "expr": "display_value",
+          "interval": "",
+          "legendFormat": "{{job}} reading",
+          "refId": "A"
+        }
+      ],
+      "title": "Display",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -375,7 +510,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "bool_on_off"
         },
         "overrides": []
       },
@@ -383,7 +519,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 26
       },
       "id": 5,
       "options": {
@@ -409,6 +545,8 @@
           },
           "exemplar": true,
           "expr": "airconditioner_state",
+          "format": "time_series",
+          "instant": false,
           "interval": "",
           "legendFormat": "",
           "refId": "A"
