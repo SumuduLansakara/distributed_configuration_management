@@ -5,4 +5,4 @@ up:
 	docker compose up
 
 cleanup:
-	docker compose -v rm -f
+	docker compose down -v
