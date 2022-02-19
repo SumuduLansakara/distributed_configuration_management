@@ -26,3 +26,10 @@ const (
 	ValueACStateActive   = "active"
 	ValueACStateInactive = "inactive"
 )
+
+const (
+	QueryKeyGetTemperature = "/gettemperature"
+	QueryKeySetTemperature = "/settemperature"
+	QueryKeyGetHumidity    = "/gethumidity"
+	QueryKeySetHumidity    = "/sethumidity"
+)

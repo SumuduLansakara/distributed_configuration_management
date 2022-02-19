@@ -39,6 +39,14 @@ services:
       - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
       - ETCD_INITIAL_CLUSTER_STATE=new
       - ETCD_LOG_LEVEL=info
+  environment:
+    image: prototype
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3100:3100
+    command: environment
   ts:
     image: prototype
     build:
