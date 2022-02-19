@@ -25,6 +25,97 @@
   "liveNow": false,
   "panels": [
     {
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 16,
+      "title": "Displays",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "exemplar": false,
+          "expr": "display_value",
+          "interval": "",
+          "legendFormat": "{{job}} reading",
+          "refId": "A"
+        }
+      ],
+      "title": "Display",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 14,
+      "panels": [],
+      "title": "Sensors",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
@@ -93,7 +184,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 11
       },
       "id": 3,
       "options": {
@@ -156,7 +247,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 11
       },
       "id": 7,
       "options": {
@@ -257,7 +348,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 9
+        "y": 20
       },
       "id": 2,
       "options": {
@@ -320,7 +411,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 9
+        "y": 20
       },
       "id": 6,
       "options": {
@@ -351,6 +442,19 @@
       ],
       "title": "Temparature Sensor Reading",
       "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 12,
+      "panels": [],
+      "title": "Actuators and Controllers",
+      "type": "row"
     },
     {
       "datasource": {
@@ -388,7 +492,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 30
       },
       "id": 8,
       "options": {
@@ -429,73 +533,6 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 18
-      },
-      "id": 9,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "8.4.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": false,
-          "expr": "display_value",
-          "interval": "",
-          "legendFormat": "{{job}} reading",
-          "refId": "A"
-        }
-      ],
-      "title": "Display",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -527,7 +564,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 38
       },
       "id": 10,
       "options": {
