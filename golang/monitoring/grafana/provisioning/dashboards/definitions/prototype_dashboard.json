@@ -360,7 +360,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-RdYlGr"
+            "mode": "thresholds"
           },
           "mappings": [],
           "thresholds": {
@@ -372,7 +372,11 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
               }
             ]
           },
@@ -429,7 +433,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-RdYlGr"
+            "mode": "palette-classic"
           },
           "mappings": [],
           "thresholds": {
@@ -507,7 +511,11 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
               }
             ]
           },
@@ -521,7 +529,7 @@
         "x": 0,
         "y": 26
       },
-      "id": 5,
+      "id": 10,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
