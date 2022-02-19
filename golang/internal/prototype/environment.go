@@ -98,5 +98,5 @@ func StartEnvironment() {
 	rand.Seed(time.Now().UnixNano())
 	http.HandleFunc(QueryKeyGet, get)
 	http.HandleFunc(QueryKeySet, set)
-	go http.ListenAndServe(":3100", nil)
+	http.ListenAndServe(":3100", nil)
 }
