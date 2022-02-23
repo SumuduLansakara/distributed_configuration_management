@@ -12,36 +12,39 @@ type ComponentI interface {
 
 type System struct {
 	components []ComponentI
+	doneChan   chan interface{}
 }
 
 func (s *System) Init() {
+	s.doneChan = make(chan interface{})
 	communicator.InitClient()
 }
 
 func (s *System) StartTemperatureSensor() {
 	ts := CreateTemperatureSensor("ts-1")
 	s.components = append(s.components, ts)
-	go ts.Start()
+	ts.Start()
 }
 
 func (s *System) StartHumiditySensor() {
 	hs := CreateHumiditySensor("hs-1")
 	s.components = append(s.components, hs)
-	go hs.Start()
+	hs.Start()
 }
 
 func (s *System) StartDisplayUnit() {
 	disp := CreateDisplayUnit("disp-1")
 	s.components = append(s.components, disp)
 	time.Sleep(1 * time.Second) // FIXME: delay till sensors connect
-	go disp.Start()
+	disp.Start()
+	<-s.doneChan
 }
 
 func (s *System) StartAC() {
 	ac := CreateAirConditioner("ac-1")
 	s.components = append(s.components, ac)
 	ac.SetParam("active", "false")
-	go ac.Start()
+	ac.Start()
 }
 
 func (s *System) StartACController() {
@@ -49,9 +52,11 @@ func (s *System) StartACController() {
 	s.components = append(s.components, acCtl)
 	time.Sleep(1 * time.Second) // FIXME: delay till AC connect
 	acCtl.Start()
+	<-s.doneChan
 }
 
 func (s *System) Stop() {
+	s.doneChan <- nil
 	for _, comp := range s.components {
 		comp.Disconnect()
 	}
