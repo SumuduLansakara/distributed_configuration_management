@@ -15,14 +15,14 @@ make down
 make cleanup
 ```
 
-### Set environment properties
+### Get environment properties
+```
+curl 'localhost:3100/get?key=temperature'
+curl 'localhost:3100/get?key=humidity'
+```
 
-#### Set temperature
+### Set environment properties
 ```
 curl 'localhost:3100/set?key=temperature&value=15'
-```
-
-#### Set humidity
-```
 curl 'localhost:3100/set?key=humidity&value=50'
 ```
