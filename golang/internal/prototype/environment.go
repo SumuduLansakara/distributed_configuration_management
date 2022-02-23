@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	temperature = 15.0
+	temperature = 20.0
 	humidity    = 30.0
 )
 
