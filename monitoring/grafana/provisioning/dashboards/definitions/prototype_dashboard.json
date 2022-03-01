@@ -323,7 +323,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -335,8 +335,12 @@
                 "value": null
               },
               {
+                "color": "super-light-green",
+                "value": 20
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 25
               }
             ]
           },
