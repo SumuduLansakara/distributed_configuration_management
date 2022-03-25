@@ -12,7 +12,10 @@ import (
 
 func startMetricServer() {
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":3001", nil)
+	err := http.ListenAndServe(":3001", nil)
+	if err != nil {
+		zap.L().Panic("Failed to start metrics server", zap.Error(err))
+	}
 }
 
 func main() {
@@ -21,14 +24,14 @@ func main() {
 	go startMetricServer()
 
 	logger := zap.L()
-	logger.Debug("component started", zap.Any("args", os.Args))
+	logger.Debug("Component started", zap.Any("args", os.Args))
 
 	if len(os.Args) != 2 {
 		zap.L().Panic("Invalid argument count")
 	}
 
 	system := demo.System{}
-	zap.L().Debug("starting", zap.String("name", os.Args[1]))
+	zap.L().Debug("Starting", zap.String("name", os.Args[1]))
 
 	// following are blocking calls
 	switch os.Args[1] {
