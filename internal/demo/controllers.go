@@ -8,6 +8,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+const (
+	ThresholdAcTurnOn  = 25.0
+	ThresholdAcTurnOff = 20.0
+)
+
 type AirConditionerController struct {
 	*Component
 	metric prometheus.Gauge
@@ -55,13 +60,13 @@ func (c *AirConditionerController) Start() {
 			if err != nil {
 				panic(err)
 			}
-			if temp > 25 {
+			if temp > ThresholdAcTurnOn {
 				if airConditioner.GetParam(ParamACState) == ValueACStateInactive {
 					c.log("signalling AC to turn on")
 					airConditioner.SetParam(ParamACState, ValueACStateActive)
 					c.metric.Set(1)
 				}
-			} else if temp < 20 {
+			} else if temp < ThresholdAcTurnOff {
 				if airConditioner.GetParam(ParamACState) == ValueACStateActive {
 					c.log("signalling AC to turn off")
 					airConditioner.SetParam(ParamACState, ValueACStateInactive)
