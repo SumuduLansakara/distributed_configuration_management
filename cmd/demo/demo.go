@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go_client/internal/prototype"
+	"go_client/internal/demo"
 	"go_client/pkg/utils"
 	"net/http"
 	"os"
@@ -27,13 +27,13 @@ func main() {
 		zap.L().Panic("Invalid argument count")
 	}
 
-	system := prototype.System{}
+	system := demo.System{}
 	zap.L().Debug("starting", zap.String("name", os.Args[1]))
 
 	// following are blocking calls
 	switch os.Args[1] {
 	case "environment":
-		prototype.StartEnvironment()
+		demo.StartEnvironment()
 	case "temperature-sensor":
 		system.Init()
 		system.StartTemperatureSensor()

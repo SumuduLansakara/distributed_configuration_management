@@ -1,4 +1,4 @@
-package prototype
+package demo
 
 import (
 	"go_client/pkg/component"

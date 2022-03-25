@@ -1,4 +1,4 @@
-package prototype
+package demo
 
 const (
 	KindSensor     = "sensor"
