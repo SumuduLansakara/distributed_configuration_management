@@ -6,7 +6,6 @@ import (
 )
 
 type ComponentI interface {
-	Start()
 	Disconnect()
 }
 
@@ -33,10 +32,10 @@ func (s *System) StartHumiditySensor() {
 }
 
 func (s *System) StartDisplayUnit() {
-	disp := CreateDisplayUnit("disp-1")
-	s.components = append(s.components, disp)
+	display := CreateDisplayUnit("disp-1")
+	s.components = append(s.components, display)
 	time.Sleep(1 * time.Second) // FIXME: delay till sensors connect
-	disp.Start()
+	display.Start()
 	<-s.doneChan
 }
 

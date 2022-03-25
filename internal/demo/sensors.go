@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func QueryEnvironment(key string) (float64, error) {
+func queryEnvironment(key string) (float64, error) {
 	resp, err := http.Get("http://environment:3100/get?key=" + key)
 	if err != nil {
 		zap.L().Error("failed querying environment", zap.Error(err))
@@ -40,7 +40,7 @@ func QueryEnvironment(key string) (float64, error) {
 
 // TemperatureSensor mocks a temperature sensor by periodically updating random temperature readings
 type TemperatureSensor struct {
-	*DemoComponent
+	*Component
 	metric prometheus.Gauge
 }
 
@@ -49,7 +49,7 @@ func CreateTemperatureSensor(name string) *TemperatureSensor {
 	c.SetParam(ParamSensorType, ValueSensorTypeTemperatureSensor)
 	c.SetParam(ParamTemperature, "0") // initial value
 	return &TemperatureSensor{
-		DemoComponent: c,
+		Component: c,
 		metric: promauto.NewGauge(prometheus.GaugeOpts{
 			Name: "current_temparature",
 			Help: "Current environment temperature",
@@ -63,7 +63,7 @@ func (c *TemperatureSensor) Start() {
 
 	// wait for environment to be ready
 	for {
-		_, err := QueryEnvironment(EnvPropertyTemperature)
+		_, err := queryEnvironment(EnvPropertyTemperature)
 		if err == nil {
 			break
 		}
@@ -72,18 +72,18 @@ func (c *TemperatureSensor) Start() {
 
 	for {
 		time.Sleep(time.Second * 2)
-		temperature, err := QueryEnvironment(EnvPropertyTemperature)
+		temperature, err := queryEnvironment(EnvPropertyTemperature)
 		if err != nil {
 			continue
 		}
-		c.metric.Set(temperature)
 		c.SetParam(ParamTemperature, fmt.Sprintf("%f", temperature))
+		c.metric.Set(temperature)
 	}
 }
 
 // HumiditySensor mocks a humidity sensor by periodically updating random humidity readings
 type HumiditySensor struct {
-	*DemoComponent
+	*Component
 	metric prometheus.Gauge
 }
 
@@ -92,7 +92,7 @@ func CreateHumiditySensor(name string) *HumiditySensor {
 	c.SetParam(ParamSensorType, ValueSensorTypeHumiditySensor)
 	c.SetParam(ParamHumidity, "0") // initial value
 	return &HumiditySensor{
-		DemoComponent: c,
+		Component: c,
 		metric: promauto.NewGauge(prometheus.GaugeOpts{
 			Name: "current_humidity",
 			Help: "Current environment humidity",
@@ -106,7 +106,7 @@ func (c *HumiditySensor) Start() {
 
 	// wait for environment to be ready
 	for {
-		_, err := QueryEnvironment(EnvPropertyHumidity)
+		_, err := queryEnvironment(EnvPropertyHumidity)
 		if err == nil {
 			break
 		}
@@ -115,11 +115,11 @@ func (c *HumiditySensor) Start() {
 
 	for {
 		time.Sleep(time.Second * 2)
-		humidity, err := QueryEnvironment(EnvPropertyHumidity)
+		humidity, err := queryEnvironment(EnvPropertyHumidity)
 		if err != nil {
 			continue
 		}
-		c.metric.Set(humidity)
 		c.SetParam(ParamHumidity, fmt.Sprintf("%f", humidity))
+		c.metric.Set(humidity)
 	}
 }

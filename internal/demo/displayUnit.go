@@ -10,14 +10,14 @@ import (
 )
 
 type DisplayUnit struct {
-	*DemoComponent
+	*Component
 	metric prometheus.Gauge
 }
 
 func CreateDisplayUnit(name string) *DisplayUnit {
 	s := create(KindDisplay, name)
 	return &DisplayUnit{
-		DemoComponent: s,
+		Component: s,
 		metric: promauto.NewGauge(prometheus.GaugeOpts{
 			Name: "display_value",
 			Help: "Current display value",

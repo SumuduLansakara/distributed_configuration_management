@@ -9,14 +9,14 @@ import (
 )
 
 type AirConditionerController struct {
-	*DemoComponent
+	*Component
 	metric prometheus.Gauge
 }
 
 func CreateAirConditionerController(name string) *AirConditionerController {
 	s := create(KindController, name)
 	return &AirConditionerController{
-		DemoComponent: s,
+		Component: s,
 		metric: promauto.NewGauge(prometheus.GaugeOpts{
 			Name: "airconditioner_controller_state",
 			Help: "Current state of the air-conditioner controller",
@@ -57,15 +57,15 @@ func (c *AirConditionerController) Start() {
 			}
 			if temp > 25 {
 				if airConditioner.GetParam(ParamACState) == ValueACStateInactive {
-					c.log("signal AC on")
-					c.metric.Set(1)
+					c.log("signalling AC to turn on")
 					airConditioner.SetParam(ParamACState, ValueACStateActive)
+					c.metric.Set(1)
 				}
 			} else if temp < 20 {
 				if airConditioner.GetParam(ParamACState) == ValueACStateActive {
-					c.log("signal AC off")
-					c.metric.Set(0)
+					c.log("signalling AC to turn off")
 					airConditioner.SetParam(ParamACState, ValueACStateInactive)
+					c.metric.Set(0)
 				}
 			}
 		},

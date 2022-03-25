@@ -1,23 +1,23 @@
 package demo
 
 import (
-	"fmt"
+	"go.uber.org/zap"
 	"go_client/pkg/component"
 )
 
-type DemoComponent struct {
+type Component struct {
 	*component.LocalComponent
 }
 
-func create(kind, name string) *DemoComponent {
+func create(kind, name string) *Component {
 	comp, err := component.NewLocalComponent(kind, name)
 	if err != nil {
 		panic(err)
 	}
 	comp.Connect()
-	return &DemoComponent{comp}
+	return &Component{comp}
 }
 
-func (c *DemoComponent) log(msg string) {
-	fmt.Printf("%s\n", msg)
+func (c *Component) log(msg string) {
+	zap.L().Debug(msg)
 }
